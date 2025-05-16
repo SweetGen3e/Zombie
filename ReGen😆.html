@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra Modern Cheat Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0d0d2b, #1a1a4e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(20, 20, 50, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1 {
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            background: #1a1a4e;
+            color: #00ffcc;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .error {
+            color: #ff5555;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .menu {
+            display: none;
+        }
+
+        .menu-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            color: #00ffcc;
+            font-size: 18px;
+            text-shadow: 0 0 5px #00ffcc;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(10px);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            accent-color: #00ffcc;
+        }
+
+        .range-value {
+            color: #00ffcc;
+            font-size: 16px;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+
+        .neon {
+            animation: neon 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes neon {
+            from { text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+            to { text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc, 0 0 15px #00ffcc; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="keyContainer">
+        <h1 class="neon">Enter Access Key</h1>
+        <input type="text" id="keyInput" placeholder="Enter 7-digit Key" maxlength="7">
+        <p class="error" id="errorMsg">Invalid Key</p>
+    </div>
+
+    <div class="container menu" id="menuContainer">
+        <h1 class="neon">Cheat Menu</h1>
+        <div class="menu-item">Aimbot 99%</div>
+        <div class="menu-item">ล็อกหัว 99%</div>
+        <div class="menu-item">โมดูล 100%</div>
+        <div class="menu-item">ตัวช่วยลาก 100%</div>
+        <div class="menu-item">สับสไนไวขึ้นแบบคอม</div>
+        <div class="menu-item">สไนดูดหัว</div>
+        <div class="menu-item">ยิงระยะไกล + ดาเมจบัค</div>
+        <div class="menu-item">
+            <label>ตั้งค่าระยะยิง: <span class="range-value" id="rangeValue">500</span></label>
+            <input type="range" min="1" max="1000" value="500" oninput="updateRange(this.value)">
+        </div>
+    </div>
+
+    <script>
+        const validKey = 'ZSEROUI';
+        const keyContainer = document.getElementById('keyContainer');
+        const menuContainer = document.getElementById('menuContainer');
+        const errorMsg = document.getElementById('errorMsg');
+        const keyInput = document.getElementById('keyInput');
+
+        keyInput.addEventListener('input', () => {
+            const key = keyInput.value.toUpperCase();
+            if (key.length === 7) {
+                if (key === validKey) {
+                    keyContainer.style.display = 'none';
+                    menuContainer.style.display = 'block';
+                } else {
+                    errorMsg.style.display = 'block';
+                    keyInput.value = '';
+                    setTimeout(() => { errorMsg.style.display = 'none'; }, 2000);
+                }
+            }
+        });
+
+        function updateRange(value) {
+            document.getElementById('rangeValue').textContent = value;
+        }
+    </script>
+</body>
+</html>
