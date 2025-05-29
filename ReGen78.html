@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReGen Plus Cheat Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            background: #0d0d2b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas#starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            background: rgba(20, 20, 50, 0.85);
+            border-radius: 15px;
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7), inset 0 0 10px rgba(0, 255, 255, 0.3);
+            animation: fadeIn 1s ease-in-out;
+            position: relative;
+            z-index: 1;
+            border: 2px solid #00ffcc;
+        }
+
+        .menu-container {
+            max-height: 80vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #00ffcc #1a1a4e;
+        }
+
+        .menu-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .menu-container::-webkit-scrollbar-track {
+            background: #1a1a4e;
+        }
+
+        .menu-container::-webkit-scrollbar-thumb {
+            background: #00ffcc;
+            border-radius: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1 {
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .spotify-container {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .spotify-container p {
+            color: #00ffcc;
+            font-size: 14px;
+            text-shadow: 0 0 5px #00ffcc;
+            margin-bottom: 5px;
+        }
+
+        .spotify-container iframe {
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            background: #1a1a4e;
+            color: #00ffcc;
+            font-size: 16px;
+            text-transform: uppercase;
+            box-shadow: 0 0 5px #00ffcc;
+        }
+
+        .error {
+            color: #ff5555;
+            margin-top: 10px;
+            display: none;
+            text-shadow: 0 0 5px #ff5555;
+        }
+
+        .loading {
+            display: none;
+            color: #00ffcc;
+            font-size: 16px;
+            margin-top: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .menu {
+            margin-top: 20px;
+        }
+
+        .menu-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            color: #00ffcc;
+            font-size: 18px;
+            text-shadow: 0 0 5px #00ffcc;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(10px);
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        .toggle {
+            width: 40px;
+            height: 20px;
+            background: #555;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .toggle::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: #00ffcc;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px #00ffcc;
+        }
+
+        .toggle.active::before {
+            left: 22px;
+            background: #ff00ff;
+            box-shadow: 0 0 5px #ff00ff;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            accent-color: #00ffcc;
+        }
+
+        .range-value {
+            color: #00ffcc;
+            font-size: 16px;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+
+        .game-button {
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 18px;
+            text-shadow: 0 0 5px #00ffcc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ffcc;
+        }
+
+        .neon {
+            animation: neon 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes neon {
+            from { text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+            to { text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc, 0 0 15px #00ffcc; }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .spaceship {
+            position: fixed;
+            width: 50px;
+            height: 50px;
+            background: url('https://img.icons8.com/?size=100&id=13824&format=png') no-repeat center;
+            background-size: contain;
+            z-index: 0;
+            filter: drop-shadow(0 0 5px #00ffcc);
+        }
+
+        .spaceship:nth-child(1) { animation: fly1 15s linear infinite; }
+        .spaceship:nth-child(2) { animation: fly2 12s linear infinite; }
+        .spaceship:nth-child(3) { animation: fly3 18s linear infinite; }
+        .spaceship:nth-child(4) { animation: fly4 10s linear infinite; }
+
+        @keyframes fly1 {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(100vw, 30vh); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes fly2 {
+            0% { transform: translate(80vw, 10vh); }
+            50% { transform: translate(20vw, 80vh); }
+            100% { transform: translate(80vw, 10vh); }
+        }
+
+        @keyframes fly3 {
+            0% { transform: translate(10vw, 90vh); }
+            50% { transform: translate(90vw, 20vh); }
+            100% { transform: translate(10vw, 90vh); }
+        }
+
+        @keyframes fly4 {
+            0% { transform: translate(50vw, 0); }
+            50% { transform: translate(50vw, 100vh); }
+            100% { transform: translate(50vw, 0); }
+        }
+
+        .code-stream {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: #00ffcc;
+            font-size: 12px;
+            opacity: 0.7;
+            animation: codeFlow 20s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes codeFlow {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100vw); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+    <div class="spaceship" style="top: 10%; left: 10%;"></div>
+    <div class="spaceship" style="top: 60%; left: 80%;"></div>
+    <div class="spaceship" style="top: 20%; left: 50%;"></div>
+    <div class="spaceship" style="top: 80%; left: 20%;"></div>
+    <div class="code-stream">HACKING SYSTEM: 0xFF29A1B3C4D5E6F7G8H9I0J1K2L3M4N5...</div>
+
+    <!-- Audio Elements -->
+    <audio id="backgroundMusic" loop>
+        <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-77338/zapsplat_science_fiction_ambient_space_background_loop_001_81836.mp3" type="audio/mp3">
+    </audio>
+    <audio id="successSound">
+        <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-34434/zapsplat_science_fiction_computer_interface_confirm_001_34434.mp3" type="audio/mp3">
+    </audio>
+    <audio id="errorSound">
+        <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-34434/zapsplat_science_fiction_computer_interface_error_001_34435.mp3" type="audio/mp3">
+    </audio>
+    <audio id="clickSound">
+        <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-34434/zapsplat_science_fiction_computer_interface_button_click_001_34436.mp3" type="audio/mp3">
+    </audio>
+
+    <!-- Key Input Page -->
+    <div class="container" id="keyContainer">
+        <h1 class="neon">ยินดีต้อนรับสู่ Panel ร้าน ReGen Plus</h1>
+        <div class="spotify-container">
+            <p>Play Interstellar Main Theme</p>
+            <iframe src="https://open.spotify.com/embed/track/7IcfEY0IyV4fdALbwJCw3v" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+        </div>
+        <input type="text" id="keyInput" placeholder="Enter 7-digit Key" maxlength="7">
+        <p class="error" id="errorMsg">Invalid Key</p>
+        <p class="loading" id="loadingMsg">Connecting to Game Server...</p>
+    </div>
+
+    <!-- Menu Page -->
+    <div class="container menu-container hidden" id="menuContainer">
+        <h1 class="neon">ReGen Plus Cheat Activated</h1>
+        <div class="menu">
+            <div class="menu-item">Aimbot 99% <div class="toggle" id="aimbotToggle" onclick="playClickSound(); toggleFeature('aimbot')"></div></div>
+            <div class="menu-item">ล็อกหัว 99% <div class="toggle" id="headlockToggle" onclick="playClickSound(); toggleFeature('headlock')"></div></div>
+            <div class="menu-item">โมดูล 100% <div class="toggle" id="moduleToggle" onclick="playClickSound(); toggleFeature('module')"></div></div>
+            <div class="menu-item">ตัวช่วยลาก 100% <div class="toggle" id="dragToggle" onclick="playClickSound(); toggleFeature('drag')"></div></div>
+            <div class="menu-item">สับสไนไวขึ้นแบบคอม <div class="toggle" id="snipeToggle" onclick="playClickSound(); toggleFeature('snipe')"></div></div>
+            <div class="menu-item">สไนดูดหัว <div class="toggle" id="headshotToggle" onclick="playClickSound(); toggleFeature('headshot')"></div></div>
+            <div class="menu-item">ยิงระยะไกล + ดาเมจบัค <div class="toggle" id="rangeToggle" onclick="playClickSound(); toggleFeature('range')"></div></div>
+            <div class="menu-item">
+                <label>ตั้งค่าระยะยิง: <span class="range-value" id="rangeValue">500</span></label>
+                <input type="range" min="1" max="1000" value="500" oninput="playClickSound(); updateRange(this.value)">
+            </div>
+            <div class="menu-item">
+                <label>ตั้งค่า FPS: <span class="range-value" id="fpsValue">60</span></label>
+                <input type="range" min="60" max="360" value="60" oninput="playClickSound(); updateFps(this.value)">
+            </div>
+            <div class="game-button" onclick="playClickSound(); launchGame('freefire')">เข้าเกม Free Fire</div>
+            <div class="game-button" onclick="playClickSound(); launchGame('freefiremax')">เข้าเกม Free Fire Max</div>
+        </div>
+    </div>
+
+    <script>
+        // Audio Control
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const successSound = document.getElementById('successSound');
+        const errorSound = document.getElementById('errorSound');
+        const clickSound = document.getElementById('clickSound');
+
+        backgroundMusic.volume = 0.3; // Low volume for background
+        successSound.volume = 0.5;
+        errorSound.volume = 0.5;
+        clickSound.volume = 0.5;
+
+        // Play background music on user interaction
+        document.addEventListener('click', () => {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play().catch(err => console.log('Background music blocked:', err));
+            }
+        }, { once: true });
+
+        function playClickSound() {
+            clickSound.currentTime = 0;
+            clickSound.play().catch(err => console.log('Click sound blocked:', err));
+        }
+
+        // Starfield and Meteor Animation
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const stars = [];
+        for (let i = 0; i < 150; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2,
+                speed: Math.random() * 2 + 1
+            });
+        }
+
+        const meteors = [];
+        function addMeteor() {
+            meteors.push({
+                x: Math.random() * canvas.width,
+                y: -10,
+                length: Math.random() * 20 + 10,
+                speed: Math.random() * 5 + 5,
+                angle: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const gradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 100, canvas.width / 2, canvas.height / 2, canvas.width);
+            gradient.addColorStop(0, 'rgba(0, 50, 100, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 0, 50, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#ffffff';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                star.y += star.speed;
+                if (star.y > canvas.height) star.y = 0;
+            });
+
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = 2;
+            meteors.forEach((meteor, index) => {
+                ctx.beginPath();
+                ctx.moveTo(meteor.x, meteor.y);
+                ctx.lineTo(meteor.x - meteor.length * Math.cos(meteor.angle), meteor.y + meteor.length * Math.sin(meteor.angle));
+                ctx.stroke();
+                meteor.x += meteor.speed * Math.cos(meteor.angle);
+                meteor.y += meteor.speed * Math.sin(meteor.angle);
+                if (meteor.y > canvas.height || meteor.x > canvas.width) meteors.splice(index, 1);
+            });
+
+            if (Math.random() < 0.02) addMeteor();
+            requestAnimationFrame(animateStars);
+        }
+        animateStars();
+
+        // Key Validation
+        const validKey = 'ZSEROUI';
+        const keyContainer = document.getElementById('keyContainer');
+        const menuContainer = document.getElementById('menuContainer');
+        const keyInput = document.getElementById('keyInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const loadingMsg = document.getElementById('loadingMsg');
+
+        keyInput.addEventListener('input', () => {
+            const key = keyInput.value.toUpperCase();
+            if (key.length === 7) {
+                if (key === validKey) {
+                    loadingMsg.style.display = 'block';
+                    keyInput.disabled = true;
+                    document.body.style.animation = 'shake 0.5s';
+                    successSound.play().catch(err => console.log('Success sound blocked:', err));
+                    setTimeout(() => {
+                        document.body.style.animation = '';
+                        keyContainer.classList.add('hidden');
+                        menuContainer.classList.remove('hidden');
+                        alert('System Hacked! ReGen Plus Cheat Activated.');
+                    }, 2000);
+                } else {
+                    errorMsg.style.display = 'block';
+                    errorSound.play().catch(err => console.log('Error sound blocked:', err));
+                    keyInput.value = '';
+                    setTimeout(() => { errorMsg.style.display = 'none'; }, 2000);
+                }
+            }
+        });
+
+        function updateRange(value) {
+            document.getElementById('rangeValue').textContent = value;
+        }
+
+        function updateFps(value) {
+            document.getElementById('fpsValue').textContent = value;
+            console.log(`FPS set to ${value}`);
+        }
+
+        function toggleFeature(feature) {
+            const toggle = document.getElementById(`${feature}Toggle`);
+            toggle.classList.toggle('active');
+            console.log(`${feature} is now ${toggle.classList.contains('active') ? 'ON' : 'OFF'}`);
+            alert(`${feature.toUpperCase()} ${toggle.classList.contains('active') ? 'Activated' : 'Deactivated'} in Game!`);
+        }
+
+        function launchGame(game) {
+            const isInstalled = Math.random() > 0.3; // Mock check (30% chance of not installed)
+            if (isInstalled) {
+                alert(`Launching ${game === 'freefire' ? 'Free Fire' : 'Free Fire Max'}...`);
+                console.log(`Launching ${game}`);
+            } else {
+                alert(`${game === 'freefire' ? 'Free Fire' : 'Free Fire Max'} not found on device!`);
+            }
+        }
+
+        // Shake effect
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                50% { transform: translateX(5px); }
+                75% { transform: translateX(-5px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
