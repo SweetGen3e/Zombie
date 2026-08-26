@@ -1,0 +1,364 @@
+// memory_manager.h
+#pragma once
+#include <cstdint>
+#include <string>
+
+class MemoryManager {
+public:
+    MemoryManager();
+    ~MemoryManager();
+    bool Initialize(pid_t pid);
+    template<typename T>
+    T ReadMemory(uintptr_t address);
+    template<typename T>
+    bool WriteMemory(uintptr_t address, T value);
+private:
+    int mem_fd;
+};
+
+// memory_manager.cpp
+#include "memory_manager.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+
+MemoryManager::MemoryManager() : mem_fd(-1) {}
+MemoryManager::~MemoryManager() { if (mem_fd != -1) close(mem_fd); }
+
+bool MemoryManager::Initialize(pid_t pid) {
+    std::string mem_path = "/proc/" + std::to_string(pid) + "/mem";
+    mem_fd = open(mem_path.c_str(), O_RDWR);
+    return mem_fd != -1;
+}
+
+template<typename T>
+T MemoryManager::ReadMemory(uintptr_t address) {
+    T value;
+    pread64(mem_fd, &value, sizeof(T), address);
+    return value;
+}
+
+template<typename T>
+bool MemoryManager::WriteMemory(uintptr_t address, T value) {
+    return pwrite64(mem_fd, &value, sizeof(T), address) == sizeof(T);
+}
+// entity_manager.h
+#pragma once
+#include "memory_manager.h"
+#include <vector>
+
+struct Vector3 {
+    float x, y, z;
+};
+
+struct Player {
+    Vector3 position;
+    Vector3 head;
+    uintptr_t base_address;
+};
+
+struct Enemy {
+    Vector3 head;
+    Vector3 velocity;
+    bool isAlive;
+    bool isJumping;
+    bool isCrouching;
+    uintptr_t base_address;
+};
+
+class EntityManager {
+public:
+    EntityManager(MemoryManager* mem);
+    bool UpdateEntities();
+    Player GetLocalPlayer();
+    std::vector<Enemy> GetEnemies();
+private:
+    MemoryManager* memory;
+    Player localPlayer;
+    std::vector<Enemy> enemies;
+    const uintptr_t LOCAL_PLAYER_OFFSET = 0x12345678; // สมมติ
+    const uintptr_t ENEMY_LIST_OFFSET = 0x87654321;  // สมมติ
+};
+
+// entity_manager.cpp
+#include "entity_manager.h"
+
+EntityManager::EntityManager(MemoryManager* mem) : memory(mem) {}
+
+bool EntityManager::UpdateEntities() {
+    localPlayer.base_address = memory->ReadMemory<uintptr_t>(LOCAL_PLAYER_OFFSET);
+    localPlayer.position = memory->ReadMemory<Vector3>(localPlayer.base_address + 0x100);
+    localPlayer.head = memory->ReadMemory<Vector3>(localPlayer.base_address + 0x110);
+
+    enemies.clear();
+    uintptr_t enemy_list = memory->ReadMemory<uintptr_t>(ENEMY_LIST_OFFSET);
+    for (int i = 0; i < 32; i++) {
+        uintptr_t enemy_addr = memory->ReadMemory<uintptr_t>(enemy_list + i * 8);
+        if (enemy_addr) {
+            Enemy enemy;
+            enemy.base_address = enemy_addr;
+            enemy.head = memory->ReadMemory<Vector3>(enemy_addr + 0x110);
+            enemy.velocity = memory->ReadMemory<Vector3>(enemy_addr + 0x130);
+            enemy.isAlive = memory->ReadMemory<bool>(enemy_addr + 0x120);
+            enemy.isJumping = memory->ReadMemory<bool>(enemy_addr + 0x140);
+            enemy.isCrouching = memory->ReadMemory<bool>(enemy_addr + 0x144);
+            enemies.push_back(enemy);
+        }
+    }
+    return !enemies.empty();
+}
+
+Player EntityManager::GetLocalPlayer() { return localPlayer; }
+std::vector<Enemy> EntityManager::GetEnemies() { return enemies; }
+// math_utils.h
+#pragma once
+#include "entity_manager.h"
+
+namespace MathUtils {
+    float CalculateDistance(Vector3 a, Vector3 b);
+    Vector3 CalculateAngles(Vector3 playerPos, Vector3 target, float dpiScale);
+}
+
+// math_utils.cpp
+#include "math_utils.h"
+#include <cmath>
+
+float MathUtils::CalculateDistance(Vector3 a, Vector3 b) {
+    return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+}
+
+Vector3 MathUtils::CalculateAngles(Vector3 playerPos, Vector3 target, float dpiScale) {
+    Vector3 angles;
+    float deltaX = target.x - playerPos.x;
+    float deltaY = target.y - playerPos.y;
+    float deltaZ = target.z - playerPos.z;
+
+    angles.y = atan2(deltaY, deltaX) * 180 / M_PI;
+    float distance = sqrt(deltaX * deltaX + deltaY * deltaY);
+    angles.x = atan2(deltaZ, distance) * 180 / M_PI;
+    angles.z = 0;
+
+    angles.x *= dpiScale;
+    angles.y *= dpiScale;
+    return angles;
+}
+// bypass.h
+#pragma once
+#include <cstdint>
+
+namespace Bypass {
+    void Initialize();
+    bool ShouldSkipFrame();
+    void ObfuscateMemoryAccess(uintptr_t& address);
+    void SimulateHumanDelay();
+}
+
+// bypass.cpp
+#include "bypass.h"
+#include <cstdlib>
+#include <ctime>
+#include <unistd.h>
+
+namespace Bypass {
+    void Initialize() {
+        srand(time(nullptr));
+    }
+
+    bool ShouldSkipFrame() {
+        return (rand() % 100) < 5; // ข้าม 5% เพื่อความลื่น
+    }
+
+    void ObfuscateMemoryAccess(uintptr_t& address) {
+        address ^= 0xDEADBEEF;
+    }
+
+    void SimulateHumanDelay() {
+        usleep((rand() % 300) + 50); // Delay 0.05-0.3ms
+    }
+}
+// precision_manager.h
+#pragma once
+#include "entity_manager.h"
+
+namespace PrecisionManager {
+    Vector3 CompensateHitbox(Vector3 head, bool isJumping, bool isCrouching);
+    Vector3 PredictPosition(Vector3 head, Vector3 velocity, float bulletTravelTime);
+}
+
+// precision_manager.cpp
+#include "precision_manager.h"
+
+namespace PrecisionManager {
+    Vector3 CompensateHitbox(Vector3 head, bool isJumping, bool isCrouching) {
+        Vector3 adjusted = head;
+        if (isJumping) {
+            adjusted.z += 0.3f;
+        } else if (isCrouching) {
+            adjusted.z -= 0.2f;
+        } else {
+            adjusted.z += 0.1f;
+        }
+        return adjusted;
+    }
+
+    Vector3 PredictPosition(Vector3 head, Vector3 velocity, float bulletTravelTime) {
+        Vector3 predicted = head;
+        predicted.x += velocity.x * bulletTravelTime;
+        predicted.y += velocity.y * bulletTravelTime;
+        predicted.z += velocity.z * bulletTravelTime;
+        return predicted;
+    }
+}
+// speed_manager.h
+#pragma once
+#include "memory_manager.h"
+
+class SpeedManager {
+public:
+    SpeedManager(MemoryManager* mem);
+    void IncreaseFireRate();
+    void IncreaseWeaponSwitchSpeed();
+    void IncreaseIceWallSpeed();
+private:
+    MemoryManager* memory;
+    const uintptr_t FIRE_RATE_OFFSET = 0x22334455; // สมมติ
+    const uintptr_t WEAPON_SWITCH_OFFSET = 0x33445566; // สมมติ
+    const uintptr_t ICE_WALL_OFFSET = 0x44556677; // สมมติ
+};
+
+// speed_manager.cpp
+#include "speed_manager.h"
+
+SpeedManager::SpeedManager(MemoryManager* mem) : memory(mem) {}
+
+void SpeedManager::IncreaseFireRate() {
+    float currentFireRate = memory->ReadMemory<float>(FIRE_RATE_OFFSET);
+    memory->WriteMemory<float>(FIRE_RATE_OFFSET, currentFireRate * 0.5f);
+}
+
+void SpeedManager::IncreaseWeaponSwitchSpeed() {
+    float currentSwitchTime = memory->ReadMemory<float>(WEAPON_SWITCH_OFFSET);
+    memory->WriteMemory<float>(WEAPON_SWITCH_OFFSET, currentSwitchTime * 0.5f);
+}
+
+void SpeedManager::IncreaseIceWallSpeed() {
+    float currentIceWallTime = memory->ReadMemory<float>(ICE_WALL_OFFSET);
+    memory->WriteMemory<float>(ICE_WALL_OFFSET, currentIceWallTime * 0.5f);
+}
+// aimbot.h
+#pragma once
+#include "memory_manager.h"
+#include "entity_manager.h"
+#include "math_utils.h"
+#include "bypass.h"
+#include "precision_manager.h"
+#include "speed_manager.h"
+
+class Aimbot {
+public:
+    Aimbot(MemoryManager* mem, EntityManager* entities);
+    void Run();
+private:
+    MemoryManager* memory;
+    EntityManager* entities;
+    SpeedManager* speedManager;
+    Enemy* FindClosestEnemy();
+    bool IsFiring();
+    void LockOnHead(Enemy* target);
+    const float DPI_SCALE = 0.75f;
+    const float BULLET_TRAVEL_TIME = 0.05f;
+    const uintptr_t VIEW_ANGLES_OFFSET = 0x11223344; // สมมติ
+};
+
+// aimbot.cpp
+#include "aimbot.h"
+
+Aimbot::Aimbot(MemoryManager* mem, EntityManager* entities)
+    : memory(mem), entities(entities) {
+    speedManager = new SpeedManager(mem);
+    Bypass::Initialize();
+}
+
+Enemy* Aimbot::FindClosestEnemy() {
+    Player localPlayer = entities->GetLocalPlayer();
+    std::vector<Enemy> enemies = entities->GetEnemies();
+    Enemy* closest = nullptr;
+    float minDistance = FLT_MAX;
+
+    for (auto& enemy : enemies) {
+        if (enemy.isAlive) {
+            float distance = MathUtils::CalculateDistance(localPlayer.position, enemy.head);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closest = &enemy;
+            }
+        }
+    }
+    return closest;
+}
+
+bool Aimbot::IsFiring() {
+    return true; // ต้อง hook input จริง
+}
+
+void Aimbot::LockOnHead(Enemy* target) {
+    Player localPlayer = entities->GetLocalPlayer();
+    Vector3 adjustedHead = PrecisionManager::CompensateHitbox(target->head, target->isJumping, target->isCrouching);
+    adjustedHead = PrecisionManager::PredictPosition(adjustedHead, target->velocity, BULLET_TRAVEL_TIME);
+    Vector3 targetAngles = MathUtils::CalculateAngles(localPlayer.position, adjustedHead, DPI_SCALE);
+
+    uintptr_t obfuscatedAddress = VIEW_ANGLES_OFFSET;
+    Bypass::ObfuscateMemoryAccess(obfuscatedAddress);
+    memory->WriteMemory<Vector3>(obfuscatedAddress, targetAngles);
+    Bypass::SimulateHumanDelay();
+}
+
+void Aimbot::Run() {
+    if (Bypass::ShouldSkipFrame()) return;
+    if (entities->UpdateEntities() && IsFiring()) {
+        Enemy* closestEnemy = FindClosestEnemy();
+        if (closestEnemy) {
+            LockOnHead(closestEnemy);
+            speedManager->IncreaseFireRate();
+            speedManager->IncreaseWeaponSwitchSpeed();
+            speedManager->IncreaseIceWallSpeed();
+        }
+    }
+}
+// main.cpp
+#include "memory_manager.h"
+#include "entity_manager.h"
+#include "aimbot.h"
+#include <dlfcn.h>
+#include <android/log.h>
+
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "Aimbot", __VA_ARGS__)
+
+MemoryManager* memory = nullptr;
+EntityManager* entities = nullptr;
+Aimbot* aimbot = nullptr;
+
+char padding[1024 * 80]; // 80 KB
+
+extern "C" void Initialize() {
+    LOGI("Initializing aimbot...");
+    pid_t game_pid = getpid();
+    memory = new MemoryManager();
+    if (!memory->Initialize(game_pid)) {
+        LOGI("Failed to initialize memory manager");
+        return;
+    }
+    entities = new EntityManager(memory);
+    aimbot = new Aimbot(memory, entities);
+}
+
+extern "C" void MainLoop() {
+    if (aimbot) {
+        aimbot->Run();
+    }
+}
+
+__attribute__((constructor))
+void LibraryConstructor() {
+    Initialize();
+}
